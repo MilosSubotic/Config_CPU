@@ -1,0 +1,11 @@
+modelsim_work/
+*.wlf
+modelsim.ini
+vivado_work/
+vivado*.jou
+vivado*.log
+vivado*.zip
+vivado*.str
+.Xil/
+utilization.txt
+simulation.log
