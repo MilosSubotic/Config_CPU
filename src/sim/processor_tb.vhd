@@ -37,6 +37,16 @@ architecture processor_tb_arch of processor_tb is
 
 	constant clk_period : time      := 10 ns;
 
+	
+	file stdout: text open write_mode is "STD_OUTPUT";
+
+	procedure print(s: string) is
+		variable l: line;
+	begin
+		write(l, s);
+		writeline(stdout, l);
+	end procedure print;
+
 begin
 	
 	
@@ -57,20 +67,19 @@ begin
 	end process i_clk_process;
 
 	stimulus_process: process
-		file stdout: text open write_mode is "STD_OUTPUT";
-		variable l: line;
 	begin
 		wait for clk_period*2;
 		in_reset <= '1';
 
 		wait for clk_period*22;
+
+		print("-------------------------------------------------------");
 		if o_leds /= conv_std_logic_vector(40, o_leds'length) then
-			write(l, string'("Error: Output on LEDs is not what we expected!"));
-			writeline(stdout, l);
+			print("Error: Output on LEDs is not what we expected!");
 		else
-			write(l, string'("Testbench finished successfully"));
-			writeline(stdout, l);
+			print("Testbench finished successfully");
 		end if;
+		print("-------------------------------------------------------");
 	end process stimulus_process;
 
 end architecture processor_tb_arch;
