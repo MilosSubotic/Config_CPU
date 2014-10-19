@@ -53,7 +53,7 @@ architecture processor_arch_v1 of processor is
 	---------------------------------------------------------------------------
 	-- Nets
 
-	-- Instruction and its decoding.
+	-- Instruction and its fields.
 	signal instruction     : t_instruction;
 	signal predicate       : t_predicate;
 	signal opcode          : t_opcode;
@@ -74,6 +74,7 @@ architecture processor_arch_v1 of processor is
 	signal zero            : std_logic;
 	signal alu_res         : std_logic_vector(word_size downto 0);
 
+	-- WE for regs.
 	signal flags_we        : std_logic;
 	signal dest_we         : std_logic;
 	signal exec_instr      : std_logic;
@@ -107,7 +108,7 @@ begin
 	end process program_counter_reg;
 
 	---------------------------------------------------------------------------
-	-- Decoding (splitting) instruction.
+	-- Decoding (splitting) instruction to its fields.
 
 	predicate <= instruction(instruction_size-1 downto instruction_size-predicate_size);
 	opcode <= instruction(instruction_size-predicate_size-1 downto instruction_size-predicate_size-opcode_size);
@@ -126,6 +127,7 @@ begin
 
 	---------------------------------------------------------------------------
 
+	-- ALU
 	with opcode select
 		alu_res <=
 			'0' & const                 when OC_LD_CONST,
@@ -134,24 +136,32 @@ begin
 			('0' & src1) - ('0' & src2) when OC_SUB,
 			(others => '0')             when others;
 
+	---------------------------------------------------------------------------
+	-- Prepare data for writing.
+
 	dest      <= alu_res(word_size-1 downto 0);
 	carry_out <= alu_res(word_size);
 	zero <= '1' when dest = conv_std_logic_vector(0, word_size) else '0';
 
+	---------------------------------------------------------------------------
+	-- Resolve write enable for registers and flags from opcode.
+
 	with opcode select
 		flags_we <= 
-			'1'      when OC_ADD,
-			'1'      when OC_SUB,
-			'0'      when others;
+			'1' when OC_ADD,
+			'1' when OC_SUB,
+			'0' when others;
 
 	with opcode select
 		dest_we <= 
-			'1'      when OC_LD_CONST,
-			'1'      when OC_MOV,
-			flags_we when others;
+			'1' when OC_LD_CONST,
+			'1' when OC_MOV,
+			'1' when OC_ADD,
+			'1' when OC_SUB,
+			'0' when others;
 
 	---------------------------------------------------------------------------
-	-- Writing to registers and flags.	
+	-- Writing to registers and flags.
 
 	registers_ram: process(i_clk)
 	begin
@@ -178,6 +188,9 @@ begin
 	---------------------------------------------------------------------------
 	-- Predicate check.
 
+	-- If some bit in predicate is 1, and coresponding bit in flags is also 1
+	-- then instruction will be executed.
+	-- 0 bit in predicate means that it is not matter what is in flags.
 	exec_instr <= '1' when (predicate and flags) = predicate else '0';
 
 	---------------------------------------------------------------------------
