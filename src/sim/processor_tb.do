@@ -14,6 +14,6 @@ if [batch_mode] {
 }
 
 #run -all
-#run 100ns
+run 250ns
 
 

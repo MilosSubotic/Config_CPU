@@ -15,6 +15,8 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;
+use std.textio.all;
 
 entity processor_tb is
 end entity processor_tb;
@@ -29,7 +31,7 @@ architecture processor_tb_arch of processor_tb is
 		);
 	end component processor;
 
-	signal i_clk        : std_logic := '0';
+	signal i_clk        : std_logic := '1';
 	signal in_reset     : std_logic := '0';
 	signal o_leds       : std_logic_vector(7 downto 0);
 
@@ -48,18 +50,27 @@ begin
 
 	i_clk_process: process
 	begin
-		i_clk <= '0';
-		wait for clk_period/2;
 		i_clk <= '1';
+		wait for clk_period/2;
+		i_clk <= '0';
 		wait for clk_period/2;
 	end process i_clk_process;
 
 	stimulus_process: process
+		file stdout: text open write_mode is "STD_OUTPUT";
+		variable l: line;
 	begin
 		wait for clk_period*2;
 		in_reset <= '1';
 
-		wait;
+		wait for clk_period*22;
+		if o_leds /= conv_std_logic_vector(40, o_leds'length) then
+			write(l, string'("Error: Output on LEDs is not what we expected!"));
+			writeline(stdout, l);
+		else
+			write(l, string'("Testbench finished successfully"));
+			writeline(stdout, l);
+		end if;
 	end process stimulus_process;
 
 end architecture processor_tb_arch;

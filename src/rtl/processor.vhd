@@ -72,10 +72,11 @@ architecture processor_arch_v1 of processor is
 	signal dest            : t_word;
 	signal carry_out       : std_logic;
 	signal zero            : std_logic;
+	signal alu_res         : std_logic_vector(word_size downto 0);
 
-	signal exec_instr      : std_logic;
-	signal dest_we         : std_logic;
 	signal flags_we        : std_logic;
+	signal dest_we         : std_logic;
+	signal exec_instr      : std_logic;
 
 
 	---------------------------------------------------------------------------
@@ -106,7 +107,7 @@ begin
 	end process program_counter_reg;
 
 	---------------------------------------------------------------------------
-	-- Split instruction.
+	-- Decoding (splitting) instruction.
 
 	predicate <= instruction(instruction_size-1 downto instruction_size-predicate_size);
 	opcode <= instruction(instruction_size-predicate_size-1 downto instruction_size-predicate_size-opcode_size);
@@ -117,51 +118,41 @@ begin
 	jmp_addr <= instruction(instruction_size-predicate_size-opcode_size-1 downto 0);
 
 	---------------------------------------------------------------------------
+	-- Reading from registers and flags.	
 
 	src1 <= registers(conv_integer(src1_op));
 	src2 <= registers(conv_integer(src2_op));
 	carry_in <= flags(2);
 
-	alu: process(opcode, src1, src2, const, carry_in)
-		variable res : std_logic_vector(word_size downto 0);
-	begin
-		-- For instructions for which not matter.
-		dest <= (others => '0');
-		dest_we <= '0';
-		carry_out <= '0';
-		zero <= '0';
-		flags_we <= '0';
-		case opcode is
-			when OC_LD_CONST =>
-				dest <= const;
-				dest_we <= '1';
-			when OC_MOV =>
-				dest <= src1;
-				dest_we <= '1';
-			when OC_ADD =>
-				res := ( '0' & src1 ) + ( '0' & src2 );
+	---------------------------------------------------------------------------
 
-				dest <= res(word_size-1 downto 0);
-				dest_we <= '1';
+	with opcode select
+		alu_res <=
+			'0' & const                 when OC_LD_CONST,
+			'0' & src1                  when OC_MOV,
+			('0' & src1) + ('0' & src2) when OC_ADD,
+			('0' & src1) - ('0' & src2) when OC_SUB,
+			(others => '0')             when others;
 
-				carry_out <= res(word_size);
-				flags_we <= '1';
-			when OC_SUB =>
-				res := ( '0' & src1 ) - ( '0' & src2 );
+	dest      <= alu_res(word_size-1 downto 0);
+	carry_out <= alu_res(word_size);
+	zero <= '1' when dest = conv_std_logic_vector(0, word_size) else '0';
 
-				dest <= res(word_size-1 downto 0);
-				dest_we <= '1';
+	with opcode select
+		flags_we <= 
+			'1'      when OC_ADD,
+			'1'      when OC_SUB,
+			'0'      when others;
 
-				carry_out <= res(word_size);
-				flags_we <= '1';
-			when others =>
-				dest_we <= '0';
-				flags_we <= '0';
-		end case;
-	end process alu;
+	with opcode select
+		dest_we <= 
+			'1'      when OC_LD_CONST,
+			'1'      when OC_MOV,
+			flags_we when others;
 
 	---------------------------------------------------------------------------
-	
+	-- Writing to registers and flags.	
+
 	registers_ram: process(i_clk)
 	begin
 		if rising_edge(i_clk) then

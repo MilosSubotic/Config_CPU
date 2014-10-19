@@ -23,7 +23,7 @@ comp_sim:
 
 sim: comp_sim
 	vsim -coverage -voptargs="+acc" -t 1ns work.processor_tb \
-		-do src/sim/processor_tb.do -l simulation.log #-c
+		-do src/sim/processor_tb.do -l simulation.log -c
 
 run_vivado:
 	vivado -source ./vivado_create_project.tcl
