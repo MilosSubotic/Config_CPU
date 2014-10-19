@@ -15,7 +15,7 @@
 
 comp_sim:
 	vlib modelsim_work
-	vmap work ${PWD}/modelsim_work
+	vmap work modelsim_work
 	vcom -2002 +cover src/rtl/instruction_set.vhd
 	vcom -2002 +cover src/rtl/instruction_rom.vhd
 	vcom -2002 +cover src/rtl/processor.vhd
@@ -34,6 +34,7 @@ synthesize:
 asm:
 	./src/tools/assembler.jl src/sw/10x4.asm src/rtl/instruction_rom.vhd
 
+###############################################################################
 
 clean:
 	rm -rf modelsim_work/ *.wlf modelsim.ini \
@@ -41,4 +42,12 @@ clean:
 
 distclean: clean
 	rm -rf utilization.txt simulation.log
+
+###############################################################################
+
+dist: distclean
+	cd ../ && zip -9r \
+		LPRS1_processor-$$(date +%F-%T | sed 's/:/-/g').zip LPRS1_processor
+
+###############################################################################
 
