@@ -42,13 +42,12 @@ architecture processor_arch_v1 of processor is
 	---------------------------------------------------------------------------
 	-- Registers
 	
-	signal program_counter : t_instr_addr := (others => '0');
+	signal program_counter : t_instr_addr;
 
 	type t_registers is array (0 to registers_number-1) of t_word;
-	signal registers       : t_registers := 
-         (others => std_logic_vector(to_unsigned(0, word_size)));
+	signal registers       : t_registers;
 
-	signal flags           : t_predicate := (others => '0');
+	signal flags           : t_predicate;
 
 	---------------------------------------------------------------------------
 	-- Nets
@@ -183,10 +182,7 @@ begin
 	registers_ram: process(i_clk)
 	begin
 		if rising_edge(i_clk) then
-			if in_reset = '0' then
-				registers <= 
-               (others => std_logic_vector(to_unsigned(0, word_size)));
-			elsif dest_we = '1' and exec_instr = '1' then
+			if dest_we = '1' and exec_instr = '1' then
 				registers(to_integer(unsigned(dest_op))) <= dest;
 			end if;
 		end if;
