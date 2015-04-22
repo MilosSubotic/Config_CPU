@@ -6,7 +6,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
+use ieee.numeric_std.all;
 
 use work.instruction_set.all;
 
@@ -41,7 +41,7 @@ architecture instruction_rom_arch of instruction_rom is
 	
 begin
 
-	o_instruction <= rom(conv_integer(i_addr));
+	o_instruction <= rom(to_integer(i_addr));
 
 end architecture instruction_rom_arch;
 

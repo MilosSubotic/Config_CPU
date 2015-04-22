@@ -7,16 +7,15 @@
 --
 -- @brief Digital design of simple processor.
 --
--- @version: 1.0
+-- @version: 1.1
 -- Changelog:
 -- 1.0 - Initial version.
+-- 1.1 - numeric_std.
 --
 -------------------------------------------------------------------------------
 
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;
-use ieee.std_logic_unsigned.all;
 use ieee.numeric_std.all;
 
 use work.instruction_set.all;
@@ -46,7 +45,8 @@ architecture processor_arch_v1 of processor is
 	signal program_counter : t_instr_addr := (others => '0');
 
 	type t_registers is array (0 to registers_number-1) of t_word;
-	signal registers       : t_registers := (others => conv_std_logic_vector(0, word_size));
+	signal registers       : t_registers := 
+         (others => std_logic_vector(to_unsigned(0, word_size)));
 
 	signal flags           : t_predicate := (others => '0');
 
@@ -72,7 +72,7 @@ architecture processor_arch_v1 of processor is
 	signal dest            : t_word;
 	signal carry_out       : std_logic;
 	signal zero            : std_logic;
-	signal alu_res         : std_logic_vector(word_size downto 0);
+	signal alu_res         : unsigned(word_size downto 0);
 
 	-- WE for regs.
 	signal flags_we        : std_logic;
@@ -110,38 +110,55 @@ begin
 	---------------------------------------------------------------------------
 	-- Decoding (splitting) instruction to its fields.
 
-	predicate <= instruction(instruction_size-1 downto instruction_size-predicate_size);
-	opcode <= instruction(instruction_size-predicate_size-1 downto instruction_size-predicate_size-opcode_size);
-	dest_op <= instruction(instruction_size-predicate_size-opcode_size-1 downto instruction_size-predicate_size-opcode_size-operand_size);
-	src1_op <= instruction(instruction_size-predicate_size-opcode_size-operand_size-1 downto instruction_size-predicate_size-opcode_size-operand_size*2);
-	src2_op <= instruction(instruction_size-predicate_size-opcode_size-operand_size*2-1 downto 0);
-	const <= instruction(instruction_size-predicate_size-opcode_size-operand_size-1 downto 0);
-	jmp_addr <= instruction(instruction_size-predicate_size-opcode_size-1 downto 0);
+	predicate <= instruction(
+		instruction_size-1 downto instruction_size-predicate_size
+	);
+	opcode    <= instruction(
+		instruction_size-predicate_size-1 
+				downto instruction_size-predicate_size-opcode_size
+	);
+	dest_op   <= unsigned(instruction(
+		instruction_size-predicate_size-opcode_size-1 
+				downto instruction_size-predicate_size-opcode_size-operand_size
+	));
+	src1_op   <= unsigned(instruction(
+		instruction_size-predicate_size-opcode_size-operand_size-1 
+				downto instruction_size-predicate_size-opcode_size-operand_size*2
+	));
+	src2_op   <= unsigned(instruction(
+		instruction_size-predicate_size-opcode_size-operand_size*2-1 downto 0
+	));
+	const     <= instruction(
+		instruction_size-predicate_size-opcode_size-operand_size-1 downto 0
+	);
+	jmp_addr  <= unsigned(instruction(
+		instruction_size-predicate_size-opcode_size-1 downto 0
+	));
 
 	---------------------------------------------------------------------------
 	-- Reading from registers and flags.	
 
-	src1 <= registers(conv_integer(src1_op));
-	src2 <= registers(conv_integer(src2_op));
+	src1 <= registers(to_integer(unsigned(src1_op)));
+	src2 <= registers(to_integer(unsigned(src2_op)));
 	carry_in <= flags(2);
 
 	---------------------------------------------------------------------------
 
 	-- ALU
 	with opcode select
-		alu_res <=
-			'0' & const                 when OC_LD_CONST,
-			'0' & src1                  when OC_MOV,
-			('0' & src1) + ('0' & src2) when OC_ADD,
-			('0' & src1) - ('0' & src2) when OC_SUB,
-			(others => '0')             when others;
+		alu_res <= 
+			'0' & unsigned(const)                       when OC_LD_CONST,
+			'0' & unsigned(src1)                        when OC_MOV,
+			unsigned('0' & src1) + unsigned('0' & src2) when OC_ADD,
+			unsigned('0' & src1) - unsigned('0' & src2) when OC_SUB,
+			(others => '0')                             when others;
 
 	---------------------------------------------------------------------------
 	-- Prepare data for writing.
 
-	dest      <= alu_res(word_size-1 downto 0);
-	carry_out <= alu_res(word_size);
-	zero <= '1' when dest = conv_std_logic_vector(0, word_size) else '0';
+	dest      <= std_logic_vector(alu_res(word_size-1 downto 0));
+	carry_out <= std_logic(alu_res(word_size));
+	zero      <= '1' when alu_res(word_size-1 downto 0) = 0 else '0';
 
 	---------------------------------------------------------------------------
 	-- Resolve write enable for registers and flags from opcode.
@@ -167,9 +184,10 @@ begin
 	begin
 		if rising_edge(i_clk) then
 			if in_reset = '0' then
-				registers <= (others => conv_std_logic_vector(0, word_size));
+				registers <= 
+               (others => std_logic_vector(to_unsigned(0, word_size)));
 			elsif dest_we = '1' and exec_instr = '1' then
-				registers(conv_integer(dest_op)) <= dest;
+				registers(to_integer(unsigned(dest_op))) <= dest;
 			end if;
 		end if;
 	end process registers_ram;
@@ -180,7 +198,8 @@ begin
 			if in_reset = '0' then
 				flags <= (others => '0');
 			elsif flags_we = '1' and exec_instr = '1' then
-				flags <= (not carry_out and not zero) & carry_out & not zero & zero;
+				flags <= 
+                  (not carry_out and not zero) & carry_out & not zero & zero;
 			end if;
 		end if;
 	end process flags_reg;

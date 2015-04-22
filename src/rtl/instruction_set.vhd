@@ -15,7 +15,7 @@
 
 library  ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;
+use ieee.numeric_std.all;
 
 package instruction_set is
 
@@ -63,9 +63,9 @@ package instruction_set is
 
 	subtype t_opcode             is std_logic_vector(opcode_size-1 downto 0);
 
-	subtype t_operand            is std_logic_vector(operand_size-1 downto 0);
+	subtype t_operand            is unsigned(operand_size-1 downto 0);
 	subtype t_word               is std_logic_vector(word_size-1 downto 0);
-	subtype t_instr_addr         is std_logic_vector(instr_addr_size-1 downto 0);
+	subtype t_instr_addr         is unsigned(instr_addr_size-1 downto 0);
 	subtype t_instruction        is std_logic_vector(instruction_size-1 downto 0);
 	
 	
@@ -75,12 +75,12 @@ package instruction_set is
 
 	---------------------------------------------------------------------------
 
-	constant OC_NOP      : t_opcode := conv_std_logic_vector(0, opcode_size);
-	constant OC_JMP      : t_opcode := conv_std_logic_vector(1, opcode_size);
-	constant OC_LD_CONST : t_opcode := conv_std_logic_vector(2, opcode_size);
-	constant OC_MOV      : t_opcode := conv_std_logic_vector(3, opcode_size);
-	constant OC_ADD      : t_opcode := conv_std_logic_vector(4, opcode_size);
-	constant OC_SUB      : t_opcode := conv_std_logic_vector(5, opcode_size);
+	constant OC_NOP      : t_opcode := std_logic_vector(to_unsigned(0, opcode_size));
+	constant OC_JMP      : t_opcode := std_logic_vector(to_unsigned(1, opcode_size));
+	constant OC_LD_CONST : t_opcode := std_logic_vector(to_unsigned(2, opcode_size));
+	constant OC_MOV      : t_opcode := std_logic_vector(to_unsigned(3, opcode_size));
+	constant OC_ADD      : t_opcode := std_logic_vector(to_unsigned(4, opcode_size));
+	constant OC_SUB      : t_opcode := std_logic_vector(to_unsigned(5, opcode_size));
 
 	---------------------------------------------------------------------------
 
@@ -127,7 +127,7 @@ package body instruction_set is
 		return
 			P_ALWAYS &
 			OC_NOP & 
-			conv_std_logic_vector(0, 3*operand_size);
+			std_logic_vector(to_unsigned(0, 3*operand_size));
 	end function nop;
 
 	function jmp (
@@ -138,7 +138,7 @@ package body instruction_set is
 		return
 			predicate &
 			OC_JMP &
-			conv_std_logic_vector(addr, instr_addr_size);
+			std_logic_vector(to_unsigned(addr, instr_addr_size));
 	end function jmp;
 
 	function ld_const (
@@ -150,8 +150,8 @@ package body instruction_set is
 		return
 			predicate &
 			OC_LD_CONST &
-			conv_std_logic_vector(dest, operand_size) &
-			conv_std_logic_vector(const, word_size);
+			std_logic_vector(to_unsigned(dest, operand_size)) &
+			std_logic_vector(to_unsigned(const, word_size));
 	end function ld_const;
 	
 	function mov (
@@ -163,9 +163,9 @@ package body instruction_set is
 		return
 			predicate &
 			OC_MOV &
-			conv_std_logic_vector(dest, operand_size) &
-			conv_std_logic_vector(src, operand_size) &
-			conv_std_logic_vector(0, operand_size);
+			std_logic_vector(to_unsigned(dest, operand_size)) &
+			std_logic_vector(to_unsigned(src, operand_size)) &
+			std_logic_vector(to_unsigned(0, operand_size));
 	end function mov;
 
 	function add (
@@ -178,9 +178,9 @@ package body instruction_set is
 		return
 			predicate &
 			OC_ADD &
-			conv_std_logic_vector(dest, operand_size) &
-			conv_std_logic_vector(src1, operand_size) &
-			conv_std_logic_vector(src2, operand_size);
+			std_logic_vector(to_unsigned(dest, operand_size)) &
+			std_logic_vector(to_unsigned(src1, operand_size)) &
+			std_logic_vector(to_unsigned(src2, operand_size));
 	end function add;
 
 	function sub (
@@ -193,9 +193,9 @@ package body instruction_set is
 		return
 			predicate &
 			OC_SUB &
-			conv_std_logic_vector(dest, operand_size) &
-			conv_std_logic_vector(src1, operand_size) &
-			conv_std_logic_vector(src2, operand_size);
+			std_logic_vector(to_unsigned(dest, operand_size)) &
+			std_logic_vector(to_unsigned(src1, operand_size)) &
+			std_logic_vector(to_unsigned(src2, operand_size));
 	end function sub;
 
 end package body instruction_set;

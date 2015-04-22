@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- @file processor_TB.vhd
+-- @file processor_tb.vhd
 -- @date Oct 17, 2014
 --
 -- @author Milos Subotic <milos.subotic.sm@gmail.com>
@@ -7,21 +7,25 @@
 --
 -- @brief Testbench for processor.
 --
--- @version: 1.0
+-- @version: 1.1
 -- Changelog:
 -- 1.0 - Initial version.
+-- 1.1 - Asserts and numeric_std.
 --
 -------------------------------------------------------------------------------
 
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;
+use ieee.numeric_std.all;
 use std.textio.all;
 
 entity processor_tb is
 end entity processor_tb;
 
 architecture processor_tb_arch of processor_tb is
+
+	-- Possible values: note, warning, error, failure;
+	constant assert_severity : severity_level := failure; 
 
 	component processor is
 		port (
@@ -36,20 +40,17 @@ architecture processor_tb_arch of processor_tb is
 	signal o_leds       : std_logic_vector(7 downto 0);
 
 	constant clk_period : time      := 10 ns;
-
 	
 	file stdout: text open write_mode is "STD_OUTPUT";
-
-	procedure print(s: string) is
+	procedure println(s: string) is
 		variable l: line;
 	begin
 		write(l, s);
 		writeline(stdout, l);
-	end procedure print;
+	end procedure println;
 
 begin
-	
-	
+		
 	dut: processor
 	port map (
 		i_clk    => i_clk,
@@ -57,7 +58,6 @@ begin
 		o_leds   => o_leds
 	);
 	
-
 	i_clk_process: process
 	begin
 		i_clk <= '1';
@@ -73,13 +73,13 @@ begin
 
 		wait for clk_period*22;
 
-		print("-------------------------------------------------------");
-		if o_leds /= conv_std_logic_vector(40, o_leds'length) then
-			print("Error: Output on LEDs is not what we expected!");
-		else
-			print("Testbench finished successfully");
-		end if;
-		print("-------------------------------------------------------");
+		assert unsigned(o_leds) = to_unsigned(40, o_leds'length) 
+			report "Output on LEDs is not what we expected!"
+			severity assert_severity;
+
+		println("--------------------------------------");
+		println("Testbench done!");
+		println("--------------------------------------");
 	end process stimulus_process;
 
 end architecture processor_tb_arch;
