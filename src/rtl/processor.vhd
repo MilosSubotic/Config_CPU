@@ -40,7 +40,7 @@ architecture processor_arch_v1 of processor is
 	end component instruction_rom;
 
 	---------------------------------------------------------------------------
-	-- Registers
+	-- Registers.
 	
 	signal program_counter : t_instr_addr;
 
@@ -50,7 +50,7 @@ architecture processor_arch_v1 of processor is
 	signal flags           : t_predicate;
 
 	---------------------------------------------------------------------------
-	-- Nets
+	-- Nets.
 
 	-- Instruction and its fields.
 	signal instruction     : t_instruction;
@@ -68,10 +68,10 @@ architecture processor_arch_v1 of processor is
 	signal carry_in        : std_logic;
 
 	-- ALU output.
+	signal alu_res         : unsigned(word_size downto 0);
 	signal dest            : t_word;
 	signal carry_out       : std_logic;
 	signal zero            : std_logic;
-	signal alu_res         : unsigned(word_size downto 0);
 
 	-- WE for regs.
 	signal flags_we        : std_logic;
@@ -121,8 +121,8 @@ begin
 	---------------------------------------------------------------------------
 	-- Reading from registers and flags.	
 
-	src1 <= registers(to_integer(unsigned(src1_op)));
-	src2 <= registers(to_integer(unsigned(src2_op)));
+	src1 <= registers(to_integer(src1_op));
+	src2 <= registers(to_integer(src2_op));
 	carry_in <= flags(t_predicate'low + 2);
 
 	---------------------------------------------------------------------------
