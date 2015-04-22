@@ -56,9 +56,9 @@ architecture processor_arch_v1 of processor is
 	signal instruction     : t_instruction;
 	signal predicate       : t_predicate;
 	signal opcode          : t_opcode;
-	signal dest_op         : t_operand;
-	signal src1_op         : t_operand;
-	signal src2_op         : t_operand;
+	signal dest_op         : t_dest_op;
+	signal src1_op         : t_src1_op;
+	signal src2_op         : t_src2_op;
 	signal const           : t_word;
 	signal jmp_addr        : t_instr_addr;
 
@@ -76,6 +76,7 @@ architecture processor_arch_v1 of processor is
 	-- WE for regs.
 	signal flags_we        : std_logic;
 	signal dest_we         : std_logic;
+	signal jmp_en          : std_logic;
 	signal exec_instr      : std_logic;
 
 
@@ -97,7 +98,7 @@ begin
 			if in_reset = '0' then
 				program_counter <= (others => '0');
 			else
-				if opcode = OC_JMP and exec_instr = '1' then
+				if jmp_en = '1' and exec_instr = '1' then
 					program_counter <= jmp_addr;
 				else
 					program_counter <= program_counter + 1;
@@ -109,37 +110,20 @@ begin
 	---------------------------------------------------------------------------
 	-- Decoding (splitting) instruction to its fields.
 
-	predicate <= instruction(
-		instruction_size-1 downto instruction_size-predicate_size
-	);
-	opcode    <= instruction(
-		instruction_size-predicate_size-1 
-				downto instruction_size-predicate_size-opcode_size
-	);
-	dest_op   <= unsigned(instruction(
-		instruction_size-predicate_size-opcode_size-1 
-				downto instruction_size-predicate_size-opcode_size-operand_size
-	));
-	src1_op   <= unsigned(instruction(
-		instruction_size-predicate_size-opcode_size-operand_size-1 
-				downto instruction_size-predicate_size-opcode_size-operand_size*2
-	));
-	src2_op   <= unsigned(instruction(
-		instruction_size-predicate_size-opcode_size-operand_size*2-1 downto 0
-	));
-	const     <= instruction(
-		instruction_size-predicate_size-opcode_size-operand_size-1 downto 0
-	);
-	jmp_addr  <= unsigned(instruction(
-		instruction_size-predicate_size-opcode_size-1 downto 0
-	));
+	predicate <= instruction(t_predicate'range);
+	opcode    <= instruction(t_opcode'range);
+	dest_op   <= unsigned(instruction(dest_op'range));
+	src1_op   <= unsigned(instruction(src1_op'range));
+	src2_op   <= unsigned(instruction(src2_op'range));
+	const     <= instruction(t_word'range);
+	jmp_addr  <= unsigned(instruction(t_instr_addr'range));
 
 	---------------------------------------------------------------------------
 	-- Reading from registers and flags.	
 
 	src1 <= registers(to_integer(unsigned(src1_op)));
 	src2 <= registers(to_integer(unsigned(src2_op)));
-	carry_in <= flags(2);
+	carry_in <= flags(t_predicate'low + 2);
 
 	---------------------------------------------------------------------------
 
@@ -160,7 +144,7 @@ begin
 	zero      <= '1' when alu_res(word_size-1 downto 0) = 0 else '0';
 
 	---------------------------------------------------------------------------
-	-- Resolve write enable for registers and flags from opcode.
+	-- Resolve enables for registers, flags and jump from opcode.
 
 	with opcode select
 		flags_we <= 
@@ -174,6 +158,11 @@ begin
 			'1' when OC_MOV,
 			'1' when OC_ADD,
 			'1' when OC_SUB,
+			'0' when others;
+
+	with opcode select
+		jmp_en <=
+			'1' when OC_JMP,
 			'0' when others;
 
 	---------------------------------------------------------------------------
@@ -191,11 +180,9 @@ begin
 	flags_reg: process(i_clk)
 	begin
 		if rising_edge(i_clk) then
-			if in_reset = '0' then
-				flags <= (others => '0');
-			elsif flags_we = '1' and exec_instr = '1' then
+			if flags_we = '1' and exec_instr = '1' then
 				flags <= 
-                  (not carry_out and not zero) & carry_out & not zero & zero;
+					(not carry_out and not zero) & carry_out & not zero & zero;
 			end if;
 		end if;
 	end process flags_reg;

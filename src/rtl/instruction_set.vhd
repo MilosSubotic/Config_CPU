@@ -52,7 +52,7 @@ package instruction_set is
 	constant instructions_number : natural := 256; --2**instr_addr_size;
 
 
-	subtype t_predicate          is std_logic_vector(predicate_size-1 downto 0);
+	subtype t_predicate          is std_logic_vector(19 downto 16);
 	constant P_ALWAYS            : t_predicate := "0000";
 	constant P_EQUAL             : t_predicate := "0001";
 	constant P_DIFFERENT         : t_predicate := "0010";
@@ -61,12 +61,14 @@ package instruction_set is
 	constant P_ZERO              : t_predicate := "0001";
 	constant P_CARRY             : t_predicate := "0100";
 
-	subtype t_opcode             is std_logic_vector(opcode_size-1 downto 0);
+	subtype t_opcode             is std_logic_vector(15 downto 12);
 
-	subtype t_operand            is unsigned(operand_size-1 downto 0);
-	subtype t_word               is std_logic_vector(word_size-1 downto 0);
-	subtype t_instr_addr         is unsigned(instr_addr_size-1 downto 0);
-	subtype t_instruction        is std_logic_vector(instruction_size-1 downto 0);
+	subtype t_dest_op            is unsigned(11 downto 8);
+	subtype t_src1_op            is unsigned(7 downto 4);
+	subtype t_src2_op            is unsigned(3 downto 0);
+	subtype t_word               is std_logic_vector(7 downto 0);
+	subtype t_instr_addr         is unsigned(11 downto 0);
+	subtype t_instruction        is std_logic_vector(19 downto 0);
 	
 	
 	subtype t_operand_nat        is natural range 2**operand_size-1 downto 0;
