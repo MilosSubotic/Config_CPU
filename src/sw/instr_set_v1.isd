@@ -1,0 +1,51 @@
+
+const register_width = 8
+const registers_number = 16
+
+const register_aliases = Dict{UInt, Array{String, 1}}(
+	0  => [ "zero" ],
+	14 => [ "leds" ],
+	15 => [ "flags" ]
+)
+
+const predicates = Dict{UInt, Array{String, 1}}(
+	0b0000 => [ "" ],
+	0b0010 => [ "e", "z" ],
+	0b0011 => [ "d", "nz" ],
+	0b0100 => [ "b", "c" ],
+	0b0101 => [ "ae", "nc" ],
+	0b0110 => [ "a" ],
+	0b0111 => [ "be" ],
+	0b1000 => [ "o" ]
+)
+predicate_aliases = Dict{String, String}(
+	""   => "default",
+	"e"  => "equal",
+	"z"  => "zero",
+	"d"  => "different",
+	"nz" => "non-zero",
+	"b"  => "below",
+	"c"  => "carry",
+	"ae" => "above equal",
+	"nc" => "no carry",
+	"a"  => "above",
+	"be" => "below equal",
+	"o"  => "overflow"
+)
+
+# Key is format, value is array of instructions with that format.
+# d is destination register (left of =),
+# s is source register (right of =),
+# c is constant (number),
+# l is label (address).
+const instructions = Dict{String, Array{String, 1}}(
+	""               => [ "nop" ],
+	"d0_4 s0_4 s1_4" => [ "add", "sub", "adc", "sbb" ],
+	" 0_4 s0_4 s1_4" => [ "cmp" ],
+	"d0_4 s0_4  1_4" => [ "mov", "inc", "dec" ],
+	"d0_4 s0_4 c1_4" => [ "addk", "subk" ],
+	"d0_4 c0_8"      => [ "ld_const" ],
+	"l0_12"          => [ "jmp" ]
+)
+
+

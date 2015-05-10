@@ -13,11 +13,25 @@
 #
 ###############################################################################
 
+.PHONY: asm
+
+###############################################################################
+
+FIRMWARE=src/sw/10x4.asm
+ISET_DEF=src/sw/instr_set_v1.isd
+
+###############################################################################
+
+ASM=./src/tools/assembler.jl
+ISET_P=src/rtl/instruction_set_p.vhd
+ROM_A=src/rtl/instruction_rom_a.vhd
+
 comp_sim:
 	vlib modelsim_work
 	vmap work modelsim_work
-	vcom -2002 +cover src/rtl/instruction_set.vhd
-	vcom -2002 +cover src/rtl/instruction_rom.vhd
+	vcom -2002 +cover ${ISET_P}
+	vcom -2002 +cover src/rtl/instruction_rom_e.vhd
+	vcom -2002 +cover ${ROM_A}
 	vcom -2002 +cover src/rtl/processor.vhd
 	vcom -2002 +cover src/sim/processor_tb.vhd
 
@@ -31,8 +45,12 @@ run_vivado:
 synthesize:
 	vivado -source ./vivado_synthesize.tcl -mode tcl
 
-asm:
-	./src/tools/assembler.jl src/sw/10x4.asm src/rtl/instruction_rom.vhd
+asm: ${ROM_A}
+${ROM_A}: ${ASM} ${FIRMWARE}
+	${ASM} ${FIRMWARE} ${ROM_A}
+
+${ISET_P} ${ASM}: ${ISET_DEF}
+	./src/tools/gen_instr_set.jl ${ISET_DEF} ${ISET_P} ${ASM}
 
 ###############################################################################
 
@@ -48,7 +66,7 @@ distclean: clean
 
 dist: distclean
 	cd ../ && zip -9r \
-		LPRS1_processor-$$(date +%F-%T | sed 's/:/-/g').zip LPRS1_processor
+		Config_CPU-$$(date +%F-%T | sed 's/:/-/g').zip Config_CPU
 
 ###############################################################################
 
