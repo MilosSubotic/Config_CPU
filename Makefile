@@ -1,15 +1,9 @@
 ###############################################################################
-# @file Makefile
-# @date Oct 18, 2014
 #
 # @author Milos Subotic <milos.subotic.sm@gmail.com>
 # @license MIT
 #
 # @brief Makefile for processor project.
-#
-# @version: 1.0
-# Changelog:
-# 1.0 - Initial version.
 #
 ###############################################################################
 

@@ -1,16 +1,9 @@
 -------------------------------------------------------------------------------
--- @file processor.vhd
--- @date Oct 17, 2014
 --
 -- @author Milos Subotic <milos.subotic.sm@gmail.com>
 -- @license MIT
 --
 -- @brief Digital design of simple processor.
---
--- @version: 1.1
--- Changelog:
--- 1.0 - Initial version.
--- 1.1 - numeric_std.
 --
 -------------------------------------------------------------------------------
 

@@ -1,5 +1,10 @@
-
+//
+// @author Milos Subotic <milos.subotic.sm@gmail.com>
+// @license MIT
+//
 // Multiply 4 with 10 by using sum and loop.
+//
+
 		ld_num %0=0   // i = 0;
 		ld_num %1=1
 		ld_num %2=4
@@ -13,5 +18,3 @@ loop_start:
 		mov %15=%3
 infinite_loop:
 		jmp infinite_loop
-
-

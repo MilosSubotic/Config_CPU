@@ -4,7 +4,7 @@
 # @author Milos Subotic <milos.subotic.sm@gmail.com>
 # @license MIT
 #
-# @brief Generate instruction set and assembler.
+# @brief Instruction set and assembler generator.
 #
 ###############################################################################
 

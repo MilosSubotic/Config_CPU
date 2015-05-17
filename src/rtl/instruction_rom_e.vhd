@@ -1,3 +1,11 @@
+-------------------------------------------------------------------------------
+--
+-- @author Milos Subotic <milos.subotic.sm@gmail.com>
+-- @license MIT
+--
+-- @brief Entity of instruction ROM.
+--
+-------------------------------------------------------------------------------
 
 use work.instruction_set.all;
 

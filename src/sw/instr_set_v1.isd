@@ -1,3 +1,12 @@
+#
+###############################################################################
+#
+# @author Milos Subotic <milos.subotic.sm@gmail.com>
+# @license MIT
+#
+# @brief Example of instruction set definition.
+#
+###############################################################################
 
 const register_width = 8
 const registers_number = 16
@@ -48,4 +57,4 @@ const instructions = Dict{String, Array{String, 1}}(
 	"a0_12"          => [ "jmp" ]
 )
 
-
+###############################################################################
