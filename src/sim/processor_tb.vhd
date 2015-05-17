@@ -19,6 +19,8 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use std.textio.all;
 
+use work.processor;
+
 entity processor_tb is
 end entity processor_tb;
 
@@ -26,14 +28,6 @@ architecture processor_tb_arch of processor_tb is
 
 	-- Possible values: note, warning, error, failure;
 	constant assert_severity : severity_level := failure; 
-
-	component processor is
-		port (
-			i_clk    : in  std_logic;
-			in_reset : in  std_logic;
-			o_leds   : out std_logic_vector(7 downto 0)
-		);
-	end component processor;
 
 	signal i_clk        : std_logic := '1';
 	signal in_reset     : std_logic := '0';
@@ -51,7 +45,7 @@ architecture processor_tb_arch of processor_tb is
 
 begin
 		
-	dut: processor
+	dut: entity processor
 	port map (
 		i_clk    => i_clk,
 		in_reset => in_reset,

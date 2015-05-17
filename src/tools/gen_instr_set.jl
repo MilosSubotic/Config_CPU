@@ -321,6 +321,9 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 package instruction_set is
+
+	constant REGISTER_NUMBER : natural := $registers_number;
+
 ")
 
 
@@ -345,6 +348,7 @@ package instruction_set is
 	subtype("instruction", instruction_range, "std_logic_vector")
 	subtype("predicate", predicate_range, "std_logic_vector")
 	subtype("opcode", opcode_range, "std_logic_vector")
+	subtype("word", 0:register_width-1, "std_logic_vector")
 	for (field_name, range) in fields
 		subtype(field_name, range, "unsigned")
 	end

@@ -12,6 +12,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 use work.instruction_set.all;
+use work.instruction_rom;
 
 entity processor is
 	port (
@@ -22,25 +23,17 @@ entity processor is
 end entity processor;
 
 architecture processor_arch_v1 of processor is
-	---------------------------------------------------------------------------
-	-- Components declarations.
-	
-	component instruction_rom is
-		port (
-			i_addr        : in  t_instr_addr;
-			o_instruction : out t_instruction
-		);
-	end component instruction_rom;
 
 	---------------------------------------------------------------------------
 	-- Registers.
 	
-	signal program_counter : t_instr_addr;
+	signal program_counter : t_addr0;
 
-	type t_registers is array (0 to registers_number-1) of t_word;
+	type t_registers is array (0 to REGISTER_NUMBER-1) of t_word;
 	signal registers       : t_registers;
 
-	signal flags           : t_predicate;
+   signal zero            : std_logic;
+	signal carry           : std_logic;
 
 	---------------------------------------------------------------------------
 	-- Nets.
@@ -49,22 +42,23 @@ architecture processor_arch_v1 of processor is
 	signal instruction     : t_instruction;
 	signal predicate       : t_predicate;
 	signal opcode          : t_opcode;
-	signal dest_op         : t_dest_op;
-	signal src1_op         : t_src1_op;
-	signal src2_op         : t_src2_op;
-	signal const           : t_word;
-	signal jmp_addr        : t_instr_addr;
+	signal dst0            : t_dst0;
+	signal src0            : t_src0;
+	signal src1            : t_src1;
+	signal num_word        : t_num0;
+	signal num_half_word   : t_num1;
+	signal jmp_addr        : t_addr0;
 
 	-- ALU input.
-	signal src1            : t_word;
-	signal src2            : t_word;
+	signal w_src0          : t_word;
+	signal w_src1          : t_word;
 	signal carry_in        : std_logic;
 
 	-- ALU output.
-	signal alu_res         : unsigned(word_size downto 0);
-	signal dest            : t_word;
+	signal alu_res         : unsigned(t_word'left+1 downto t_word'right);
+	signal w_dst0          : t_word;
 	signal carry_out       : std_logic;
-	signal zero            : std_logic;
+	signal zero_out        : std_logic;
 
 	-- WE for regs.
 	signal flags_we        : std_logic;
@@ -72,6 +66,12 @@ architecture processor_arch_v1 of processor is
 	signal jmp_en          : std_logic;
 	signal exec_instr      : std_logic;
 
+   -- Temporals for calculation.
+	signal u_src0          : unsigned(t_word'range);
+	signal u_src1          : unsigned(t_word'range);
+	signal s_src0          : signed(t_word'range);
+	signal s_src1          : signed(t_word'range);
+   signal pred_calc_out   : std_logic;
 
 	---------------------------------------------------------------------------
 
@@ -79,7 +79,7 @@ begin
 
 	---------------------------------------------------------------------------
 
-	instr_rom : instruction_rom
+	instr_rom : entity instruction_rom
 	port map (
 		i_addr  => program_counter,
 		o_instruction => instruction
@@ -102,39 +102,49 @@ begin
 
 	---------------------------------------------------------------------------
 	-- Decoding (splitting) instruction to its fields.
-
-	predicate <= instruction(t_predicate'range);
-	opcode    <= instruction(t_opcode'range);
-	dest_op   <= unsigned(instruction(dest_op'range));
-	src1_op   <= unsigned(instruction(src1_op'range));
-	src2_op   <= unsigned(instruction(src2_op'range));
-	const     <= instruction(t_word'range);
-	jmp_addr  <= unsigned(instruction(t_instr_addr'range));
+   
+	predicate     <= instruction(t_predicate'range);
+	opcode        <= instruction(t_opcode'range);
+	dst0          <= unsigned(instruction(t_dst0'range));
+	src0          <= unsigned(instruction(t_src0'range));
+	src1          <= unsigned(instruction(t_src1'range));
+	num_word      <= unsigned(instruction(t_num0'range));
+	num_half_word <= unsigned(instruction(t_num1'range));
+	jmp_addr      <= unsigned(instruction(t_addr0'range));
 
 	---------------------------------------------------------------------------
-	-- Reading from registers and flags.	
+	-- Reading from registers.	
+   
+	w_src0 <= registers(to_integer(src0));
+	w_src1 <= registers(to_integer(src1));
 
-	src1 <= registers(to_integer(src1_op));
-	src2 <= registers(to_integer(src2_op));
-	carry_in <= flags(t_predicate'low + 2);
-
+   ---------------------------------------------------------------------------
+   -- Temporals.
+   
+	u_src0 <= unsigned(w_src0);
+	u_src1 <= unsigned(w_src1);
+	s_src0 <= signed(w_src0);
+	s_src1 <= signed(w_src1);
+	
 	---------------------------------------------------------------------------
 
 	-- ALU
 	with opcode select
 		alu_res <= 
-			'0' & unsigned(const)                       when OC_LD_CONST,
-			'0' & unsigned(src1)                        when OC_MOV,
-			unsigned('0' & src1) + unsigned('0' & src2) when OC_ADD,
-			unsigned('0' & src1) - unsigned('0' & src2) when OC_SUB,
-			(others => '0')                             when others;
+			'0' & num_word                             when OC_LD_NUM,
+			'0' & u_src0                               when OC_MOV,
+			('0' & u_src0) + ('0' & u_src1)            when OC_ADD,
+			('0' & u_src0) - ('0' & u_src1)            when OC_SUB,
+			('0' & u_src0) + ("00000" & num_half_word) when OC_ADDK,
+			('0' & u_src0) - ("00000" & num_half_word) when OC_SUBK,
+			(others => '0')                            when others;
 
 	---------------------------------------------------------------------------
 	-- Prepare data for writing.
 
-	dest      <= std_logic_vector(alu_res(word_size-1 downto 0));
-	carry_out <= std_logic(alu_res(word_size));
-	zero      <= '1' when alu_res(word_size-1 downto 0) = 0 else '0';
+	w_dst0    <= std_logic_vector(alu_res(t_word'range));
+	carry_out <= std_logic(alu_res(t_word'left+1));
+	zero_out  <= '1' when alu_res(t_word'range) = 0 else '0';
 
 	---------------------------------------------------------------------------
 	-- Resolve enables for registers, flags and jump from opcode.
@@ -147,7 +157,7 @@ begin
 
 	with opcode select
 		dest_we <= 
-			'1' when OC_LD_CONST,
+			'1' when OC_LD_NUM,
 			'1' when OC_MOV,
 			'1' when OC_ADD,
 			'1' when OC_SUB,
@@ -165,7 +175,7 @@ begin
 	begin
 		if rising_edge(i_clk) then
 			if dest_we = '1' and exec_instr = '1' then
-				registers(to_integer(unsigned(dest_op))) <= dest;
+				registers(to_integer(dst0)) <= w_dst0;
 			end if;
 		end if;
 	end process registers_ram;
@@ -174,8 +184,8 @@ begin
 	begin
 		if rising_edge(i_clk) then
 			if flags_we = '1' and exec_instr = '1' then
-				flags <= 
-					(not carry_out and not zero) & carry_out & not zero & zero;
+            zero <= zero_out;
+				carry <= carry_out;
 			end if;
 		end if;
 	end process flags_reg;
@@ -183,10 +193,17 @@ begin
 	---------------------------------------------------------------------------
 	-- Predicate check.
 
-	-- If some bit in predicate is 1, and coresponding bit in flags is also 1
-	-- then instruction will be executed.
-	-- 0 bit in predicate means that it is not matter what is in flags.
-	exec_instr <= '1' when (predicate and flags) = predicate else '0';
+   with predicate(t_predicate'left downto t_predicate'right+1) select
+      pred_calc_out <= 
+			'1'   when "000",
+			zero  when "001",
+			carry when "010",
+			'1'   when others;
+   
+   -- Lowest bit of predicate negate result.
+   exec_instr <= 
+      pred_calc_out when predicate(t_predicate'right) = '0' else 
+      not pred_calc_out;
 
 	---------------------------------------------------------------------------
 	-- Register mapping.

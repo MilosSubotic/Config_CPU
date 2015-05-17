@@ -27,8 +27,8 @@ comp_sim:
 	vcom -2002 +cover ${ISET_P}
 	vcom -2002 +cover src/rtl/instruction_rom_e.vhd
 	vcom -2002 +cover ${ROM_A}
-	#vcom -2002 +cover src/rtl/processor.vhd
-	#vcom -2002 +cover src/sim/processor_tb.vhd
+	vcom -2002 +cover src/rtl/processor.vhd
+	vcom -2002 +cover src/sim/processor_tb.vhd
 
 sim: comp_sim
 	vsim -coverage -voptargs="+acc" -t 1ns work.processor_tb \
