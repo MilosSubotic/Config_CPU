@@ -142,9 +142,11 @@ for (format, instr_names) in instructions
 	for field in split(format)
 		m = match(r"^([dsna]?)([0-9]+)_([0-9]+)$", field)
 		if m == nothing
-			f_error(isd_file_name, "in instruction format \"" *
-				format * "\" field \"" * field * 
-				"\" is wrongly formated"
+			f_error(
+				isd_file_name,
+				"in instruction format \"",
+					format, "\" field \"", field,
+					"\" is wrongly formated"
 			)
 		else
 			short_field_type = m.captures[1]
@@ -157,12 +159,14 @@ for (format, instr_names) in instructions
 				pos += len
 				if haskey(fields, field_name)
 					if range ≠ fields[field_name]
-						f_error(isd_file_name, "in instruction format \"" *
-							format * "\" in field \"" * field * 
-							"\" range " * string(range) * 
-							" of field is different then range " *
-							string(fields[field_name]) * 
-							" defined in previous definitions"
+						f_error(
+							isd_file_name,
+								"in instruction format \"",
+								format, "\" in field \"", field,
+								"\" range ", range,
+								" of field is different then range ",
+								fields[field_name],
+								" defined in previous definitions"
 						)
 					end
 				else
@@ -224,10 +228,12 @@ for (format, instr_names) in instructions
 				len = parse(Int, m.captures[3])
 				field_init = parse(Int, m.captures[2])
 				if field_init >= 2^len
-					f_error(isd_file_name, "in instruction format \"" *
-						format * "\" in field \"" * field * 
-						"\" is too small (" * string(len) * " bits)" *
-						" for init value " * string(field_init)
+					f_error(
+						isd_file_name, 
+						"in instruction format \"",
+							format, "\" in field \"", field,
+							"\" is too small (", len, " bits)",
+							" for init value ", field_init
 					)
 				end
 				push!(
@@ -266,8 +272,9 @@ for (format, instr_names) in instructions
 
 	for instr_name in instr_names
 		if match(r"^([a-z][a-z0-9_]*)$", instr_name) == nothing
-			f_error(isd_file_name, "instruction name \"" * instr_name *
-				"\" is wrongly formated"
+			f_error(
+				isd_file_name,
+				"instruction name \"", instr_name, "\" is wrongly formated"
 			)
 		end
 		opcodes[instr_name] = oc
@@ -429,12 +436,12 @@ idx_args_parse_param = $idx_args_parse_param
 
 macro error(args...)
 	quote
-		println(input_file_name, ':', line_num, \": error: \", \$args...)
+		println(input_file_name, ':', line_num, \": error: \", \$(args...))
 	end
 end
 macro note(args...)
 	quote
-		println(input_file_name, ':', line_num, \": note: \", \$args...)
+		println(input_file_name, ':', line_num, \": note: \", \$(args...))
 	end
 end
 
@@ -484,15 +491,20 @@ asm_code = :( begin
 		return bits(opcode)[end-opcode_width+1:end]
 	end
 
-	# TODO Handle args conversion errors.
 	conv_funs = Dict{String, Function}(
 		"conv_reg" => function(line_num, num_bits, arg, nice_field_name)
 			u = parse(UInt, arg)
 			if u >= registers_number
-				@error("asdf conv_reg 1")
+				@error(
+					nice_field_name, " arugment have is too big register index"
+				)
+				exit(1)
 			end
 			if u >= 2^num_bits
-				@error("asdf conv_reg 2")
+				@error(
+					nice_field_name, " arugment cannot fit to the field"
+				)
+				exit(1)
 			end
 			return bits(u)[end-num_bits+1:end]
 		end,
@@ -500,11 +512,17 @@ asm_code = :( begin
 			i = parse(Int, arg)
 			if i >= 0
 				if i >= 2^num_bits
-					@error("asdf conv_num 1")
+					@error(
+						nice_field_name, " arugment cannot fit to the field"
+					)
+					exit(1)
 				end
 			else
 				if -i > 2^(num_bits-1)
-					@error("asdf conv_num 2")
+					@error(
+						nice_field_name, " arugment cannot fit to the field"
+					)
+					exit(1)
 				end
 			end
 			return bits(i)[end-num_bits+1:end]
@@ -512,12 +530,18 @@ asm_code = :( begin
 		"conv_addr" => function(line_num, num_bits, arg, nice_field_name)
 			label = arg
 			if !haskey(label_to_addr, label)
-				@error("asdf conv_label 1")
+				@error(
+					"reference to undefined label \"$label\""
+				)
+				exit(1)
 			else
 				addr = label_to_addr[label]
 			end
 			if addr >= 2^num_bits
-				@error("asdf conv_label 2")
+				@error(
+					nice_field_name, " arugment cannot fit to the field"
+				)
+				exit(1)
 			end
 			return bits(addr)[end-num_bits+1:end]
 		end,
@@ -554,7 +578,10 @@ asm_code = :( begin
 			m = match(line_reg, line)
 			if m == nothing
 				@error("cannot parse line")
-				@note("assembler line format is: \"[label:] [[(pred)] instr_name [args] [// comments]]\"")
+				@note(
+					"assembler line format is: ",
+					"\"[label:] [[(pred)] instr_name [args] [// comments]]\""
+				)
 				close(f)
 				exit(1)
 			else
@@ -567,7 +594,10 @@ asm_code = :( begin
 				if label ≠ nothing
 					if haskey(label_to_line_num, label)
 						@error("duplicated label \"$label\"")
-						@note("already exists on line ", label_to_line_num[label])
+						@note(
+							"already exists on line ", 
+							label_to_line_num[label]
+						)
 						close(f)
 						exit(1)
 					else
@@ -631,7 +661,10 @@ asm_code = :( begin
 		m = match(p.regex, a.args)
 		if m == nothing
 			@error("wrong insruction arguments")
-			@note("format for instruction \"$(a.instr_name)\" is \"$(p.nice_fmt)\"")
+			@note(
+				"format for instruction \"", a.instr_name, 
+					"\" is \"", p.nice_fmt, "\""
+			)
 			close(f)
 			exit(1)
 		else
