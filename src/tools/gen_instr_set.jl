@@ -178,7 +178,7 @@ for (format, instr_names) in instructions
 						regex_l *= ","
 						nice_fmt_l *= ","
 					end
-					regex_l *= "%(\\d+)"
+					regex_l *= "%(\\w+)"
 					nice_field_name = "%" * field_name
 					nice_fmt_l *= nice_field_name
 					
@@ -200,7 +200,7 @@ for (format, instr_names) in instructions
 					end
 					nice_field_name = field_name
 					if field_type == "src"
-						regex_r *= "%(\\d+)"
+						regex_r *= "%(\\w+)"
 						conv_fun_name = "conv_reg"
 						nice_field_name = "%" * field_name
 					elseif field_type == "num"
@@ -303,6 +303,21 @@ opcode_range = predicate_range.start-opcode_width:predicate_range.start-1
 fields_start = opcode_range.start-1
 for (field_name, range) in fields
 	fields[field_name] = fields_start-range.stop:fields_start-range.start
+end
+
+alias_to_reg = Dict{String, UInt}()
+for (reg, aliases) in register_aliases
+	for alias in aliases
+		if haskey(alias_to_reg, alias)
+			f_error(
+				isd_file_name,
+				"alias \"$alias\" already occupied for register \"",
+					alias_to_reg[alias], "\""
+			)
+		else
+			alias_to_reg[alias] = reg
+		end
+	end
 end
 
 
@@ -432,7 +447,7 @@ opcode_width = $opcode_width
 instruction_width = $instruction_width
 args_parse_params = $args_parse_params
 idx_args_parse_param = $idx_args_parse_param
-
+alias_to_reg = $alias_to_reg
 
 macro error(args...)
 	quote
@@ -493,16 +508,29 @@ asm_code = :( begin
 
 	conv_funs = Dict{String, Function}(
 		"conv_reg" => function(line_num, num_bits, arg, nice_field_name)
-			u = parse(UInt, arg)
-			if u >= registers_number
-				@error(
-					nice_field_name, " arugment have is too big register index"
-				)
-				exit(1)
+			u = UInt(0)
+			try
+				u = parse(UInt, arg)
+				if u >= registers_number
+					@error(
+						"\"$nice_field_name\" ",
+							"arugment have is too big register index"
+					)
+					exit(1)
+				end
+			catch ArgumentError
+				alias = arg
+				if !haskey(alias_to_reg, alias)
+					@error(
+						"alias \"$alias\" not defined"
+					)
+				else
+					u = alias_to_reg[alias]
+				end
 			end
 			if u >= 2^num_bits
 				@error(
-					nice_field_name, " arugment cannot fit to the field"
+					"\"$nice_field_name\" arugment cannot fit to the field"
 				)
 				exit(1)
 			end
@@ -513,14 +541,14 @@ asm_code = :( begin
 			if i >= 0
 				if i >= 2^num_bits
 					@error(
-						nice_field_name, " arugment cannot fit to the field"
+						"\"$nice_field_name\" arugment cannot fit to the field"
 					)
 					exit(1)
 				end
 			else
 				if -i > 2^(num_bits-1)
 					@error(
-						nice_field_name, " arugment cannot fit to the field"
+						"\"$nice_field_name\" arugment cannot fit to the field"
 					)
 					exit(1)
 				end
@@ -539,7 +567,7 @@ asm_code = :( begin
 			end
 			if addr >= 2^num_bits
 				@error(
-					nice_field_name, " arugment cannot fit to the field"
+					"\"$nice_field_name\" arugment cannot fit to the field"
 				)
 				exit(1)
 			end

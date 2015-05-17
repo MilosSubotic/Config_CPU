@@ -32,7 +32,7 @@ architecture processor_arch_v1 of processor is
 	type t_registers is array (0 to REGISTER_NUMBER-1) of t_word;
 	signal registers       : t_registers;
 
-   signal zero            : std_logic;
+	signal zero            : std_logic;
 	signal carry           : std_logic;
 
 	---------------------------------------------------------------------------
@@ -49,10 +49,11 @@ architecture processor_arch_v1 of processor is
 	signal num_half_word   : t_num1;
 	signal jmp_addr        : t_addr0;
 
-	-- ALU input.
+	-- ALU and predicate unit input.
 	signal w_src0          : t_word;
 	signal w_src1          : t_word;
 	signal carry_in        : std_logic;
+	signal zero_in         : std_logic;
 
 	-- ALU output.
 	signal alu_res         : unsigned(t_word'left+1 downto t_word'right);
@@ -71,7 +72,7 @@ architecture processor_arch_v1 of processor is
 	signal u_src1          : unsigned(t_word'range);
 	signal s_src0          : signed(t_word'range);
 	signal s_src1          : signed(t_word'range);
-   signal pred_calc_out   : std_logic;
+	signal pred_calc_out   : std_logic;
 
 	---------------------------------------------------------------------------
 
@@ -115,8 +116,11 @@ begin
 	---------------------------------------------------------------------------
 	-- Reading from registers.	
    
-	w_src0 <= registers(to_integer(src0));
-	w_src1 <= registers(to_integer(src1));
+	w_src0   <= registers(to_integer(src0));
+	w_src1   <= registers(to_integer(src1));
+
+	zero_in  <= zero;
+	carry_in <= carry;
 
    ---------------------------------------------------------------------------
    -- Temporals.
@@ -125,10 +129,25 @@ begin
 	u_src1 <= unsigned(w_src1);
 	s_src0 <= signed(w_src0);
 	s_src1 <= signed(w_src1);
+
+	---------------------------------------------------------------------------
+	-- Predicate unit.
+
+	with predicate(t_predicate'left downto t_predicate'right+1) select
+		pred_calc_out <= 
+			'1'      when "000",
+			zero_in  when "001",
+			carry_in when "010",
+			'1'      when others;
+   
+	-- Lowest bit of predicate negate result.
+	exec_instr <= 
+		pred_calc_out when predicate(t_predicate'right) = '0' else 
+		not pred_calc_out;
 	
 	---------------------------------------------------------------------------
-
 	-- ALU
+
 	with opcode select
 		alu_res <= 
 			'0' & num_word                             when OC_LD_NUM,
@@ -184,32 +203,17 @@ begin
 	begin
 		if rising_edge(i_clk) then
 			if flags_we = '1' and exec_instr = '1' then
-            zero <= zero_out;
+				zero <= zero_out;
 				carry <= carry_out;
 			end if;
 		end if;
 	end process flags_reg;
 
 	---------------------------------------------------------------------------
-	-- Predicate check.
-
-   with predicate(t_predicate'left downto t_predicate'right+1) select
-      pred_calc_out <= 
-			'1'   when "000",
-			zero  when "001",
-			carry when "010",
-			'1'   when others;
-   
-   -- Lowest bit of predicate negate result.
-   exec_instr <= 
-      pred_calc_out when predicate(t_predicate'right) = '0' else 
-      not pred_calc_out;
-
-	---------------------------------------------------------------------------
 	-- Register mapping.
 
-	-- Value of register 15 is mapped to LEDs.
-	o_leds <= registers(15);
+	-- Value of register 14 is mapped to LEDs.
+	o_leds <= registers(14);
 
 	---------------------------------------------------------------------------
 

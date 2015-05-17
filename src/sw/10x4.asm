@@ -15,6 +15,6 @@ loop_start:
 		add %0=%0,%1    // i++
 		sub %5=%0,%2    // i < 4
 	(b)	jmp loop_start
-		mov %15=%3
+		mov %leds=%3
 infinite_loop:
 		jmp infinite_loop
