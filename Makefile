@@ -6,22 +6,37 @@
 # @brief Makefile for processor project.
 #
 ###############################################################################
-
-.PHONY: asm
-
-###############################################################################
+# User defines.
 
 FIRMWARE=src/sw/10x4.asm
 ISET_DEF=src/sw/instr_set_v1.isd
 
 ###############################################################################
+# Targets.
+
+.PHONY: default asm comp_sim sim run_vivado synthesize clean distclean dist
+
+default: sim
+
+###############################################################################
+# Private vars.
 
 ASM=./src/tools/assembler.jl
 ISET_P=src/rtl/instruction_set_p.vhd
 ROM_A=src/rtl/instruction_rom_a.vhd
 GEN_ISET=./src/tools/gen_instr_set.jl
 
-comp_sim:
+###############################################################################
+# Rules.
+
+asm: ${ROM_A}
+${ROM_A}: ${ASM} ${FIRMWARE}
+	${ASM} ${FIRMWARE} ${ROM_A}
+
+${ISET_P} ${ASM}: ${GEN_ISET} ${ISET_DEF}
+	${GEN_ISET} ${ISET_DEF} ${ISET_P} ${ASM}
+
+comp_sim: ${ISET_P} ${ROM_A}
 	vlib modelsim_work
 	vmap work modelsim_work
 	vcom -2002 +cover ${ISET_P}
@@ -40,14 +55,8 @@ run_vivado:
 synthesize:
 	vivado -source ./vivado_synthesize.tcl -mode tcl
 
-asm: ${ROM_A}
-${ROM_A}: ${ASM} ${FIRMWARE}
-	${ASM} ${FIRMWARE} ${ROM_A}
-
-${ISET_P} ${ASM}: ${GEN_ISET} ${ISET_DEF}
-	${GEN_ISET} ${ISET_DEF} ${ISET_P} ${ASM}
-
 ###############################################################################
+# Housekeeping.
 
 clean:
 	rm -rf modelsim_work/ *.wlf modelsim.ini \
@@ -57,7 +66,6 @@ clean:
 distclean: clean
 	rm -rf utilization.txt simulation.log
 
-###############################################################################
 
 dist: distclean
 	cd ../ && zip -9r \
