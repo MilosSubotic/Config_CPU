@@ -25,6 +25,7 @@ ISET_DEF=src/sw/instr_set_v1.isd
 ASM=./src/tools/assembler.jl
 ISET_P=src/rtl/instruction_set_p.vhd
 ROM_A=src/rtl/instruction_rom_a.vhd
+GEN_ISET=./src/tools/gen_instr_set.jl
 
 comp_sim:
 	vlib modelsim_work
@@ -32,8 +33,8 @@ comp_sim:
 	vcom -2002 +cover ${ISET_P}
 	vcom -2002 +cover src/rtl/instruction_rom_e.vhd
 	vcom -2002 +cover ${ROM_A}
-	vcom -2002 +cover src/rtl/processor.vhd
-	vcom -2002 +cover src/sim/processor_tb.vhd
+	#vcom -2002 +cover src/rtl/processor.vhd
+	#vcom -2002 +cover src/sim/processor_tb.vhd
 
 sim: comp_sim
 	vsim -coverage -voptargs="+acc" -t 1ns work.processor_tb \
@@ -49,8 +50,8 @@ asm: ${ROM_A}
 ${ROM_A}: ${ASM} ${FIRMWARE}
 	${ASM} ${FIRMWARE} ${ROM_A}
 
-${ISET_P} ${ASM}: ${ISET_DEF}
-	./src/tools/gen_instr_set.jl ${ISET_DEF} ${ISET_P} ${ASM}
+${ISET_P} ${ASM}: ${GEN_ISET} ${ISET_DEF}
+	${GEN_ISET} ${ISET_DEF} ${ISET_P} ${ASM}
 
 ###############################################################################
 

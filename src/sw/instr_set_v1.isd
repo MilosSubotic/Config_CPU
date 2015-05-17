@@ -35,17 +35,17 @@ predicate_aliases = Dict{String, String}(
 
 # Key is format, value is array of instructions with that format.
 # d is destination register (left of =),
-# s is source register (right of =),
-# c is constant (number),
-# l is label (address).
+# s is source register,
+# n is number (literal),
+# a is address (label).
 const instructions = Dict{String, Array{String, 1}}(
 	""               => [ "nop" ],
 	"d0_4 s0_4 s1_4" => [ "add", "sub", "adc", "sbb" ],
 	" 0_4 s0_4 s1_4" => [ "cmp" ],
 	"d0_4 s0_4  1_4" => [ "mov", "inc", "dec" ],
-	"d0_4 s0_4 c1_4" => [ "addk", "subk" ],
-	"d0_4 c0_8"      => [ "ld_const" ],
-	"l0_12"          => [ "jmp" ]
+	"d0_4 s0_4 n1_4" => [ "addk", "subk" ],
+	"d0_4 n0_8"      => [ "ld_num" ],
+	"a0_12"          => [ "jmp" ]
 )
 
 

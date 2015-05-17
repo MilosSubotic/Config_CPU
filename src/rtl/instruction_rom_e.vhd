@@ -1,4 +1,3 @@
-library ieee;
 
 use work.instruction_set.all;
 
