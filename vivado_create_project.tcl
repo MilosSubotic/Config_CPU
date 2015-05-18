@@ -1,16 +1,10 @@
 #
 ###############################################################################
-# @file vivado_create_project.tcl
-# @date Oct 17, 2014
 #
 # @author Milos Subotic <milos.subotic.sm@gmail.com>
 # @license MIT
 #
 # @brief Create project for Xilinx Vivado.
-#
-# @version: 1.0
-# Changelog:
-# 1.0 - Initial version.
 #
 ###############################################################################
 
@@ -35,8 +29,9 @@ proc set_sim_top {top} {
 
 create_project processor vivado_work -force
 
-add_rtl_file src/rtl/instruction_set.vhd
-add_rtl_file src/rtl/instruction_rom.vhd
+add_rtl_file src/rtl/instruction_set_p.vhd
+add_rtl_file src/rtl/instruction_rom_e.vhd
+add_rtl_file src/rtl/instruction_rom_a.vhd
 add_rtl_file src/rtl/processor.vhd
 set_rtl_top processor
 

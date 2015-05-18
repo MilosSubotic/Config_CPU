@@ -1,16 +1,10 @@
 #
 ###############################################################################
-# @file vivado_synthesize.tcl
-# @date Oct 17, 2014
 #
 # @author Milos Subotic <milos.subotic.sm@gmail.com>
 # @license MIT
 #
 # @brief Synthesize project with Xilinx Vivado.
-#
-# @version: 1.0
-# Changelog:
-# 1.0 - Initial version.
 #
 ###############################################################################
 
