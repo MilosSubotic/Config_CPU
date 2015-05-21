@@ -61,7 +61,7 @@ synthesize:
 clean:
 	rm -rf modelsim_work/ *.wlf modelsim.ini \
 		vivado_work/ vivado*.jou vivado*.log vivado*.zip vivado*.str .Xil/ \
-		ise_work
+		ise_work ise/iseconfig/
 
 distclean: clean
 	rm -rf utilization.txt simulation.log

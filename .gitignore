@@ -9,4 +9,5 @@ vivado*.str
 .Xil/
 utilization.txt
 simulation.log
-ise_work
+ise_work/
+iseconfig/
