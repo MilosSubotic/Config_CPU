@@ -3,13 +3,13 @@
 # @author Milos Subotic <milos.subotic.sm@gmail.com>
 # @license MIT
 #
-# @brief Makefile for processor project.
+# @brief Makefile for Config_CPU project.
 #
 ###############################################################################
 # User defines.
 
 FIRMWARE=src/sw/10x4.asm
-ISET_DEF=src/sw/instr_set_v1.isd
+ISET_DEF=src/config/instr_set_v1.isd
 
 ###############################################################################
 # Targets.

@@ -27,7 +27,7 @@ const predicates = Dict{UInt, Array{String, 1}}(
 	0b0111 => [ "be" ],
 	0b1000 => [ "o" ]
 )
-predicate_aliases = Dict{String, String}(
+const predicate_aliases = Dict{String, String}(
 	""   => "default",
 	"e"  => "equal",
 	"z"  => "zero",
