@@ -2,7 +2,7 @@
 // @author Milos Subotic <milos.subotic.sm@gmail.com>
 // @license MIT
 //
-// Multiply 4 with 10 by using sum and loop.
+// @brief Multiply 4 with 10 by using sum and loop.
 //
 
 		ld_num %0=0   // i = 0;
